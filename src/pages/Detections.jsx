@@ -10,9 +10,10 @@ import {
   Eye,
   ShieldAlert,
 } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 const detections = [
   {
+    
     id: "DET-001",
     type: "Marine Debris",
     className: "Plastic / Floating Debris",
@@ -54,7 +55,7 @@ const getRiskClass = (risk) => {
 
 
 const Detections = () => {
-
+const navigate = useNavigate();
   return (
 
     <div className="detections-page">
@@ -452,16 +453,16 @@ const Detections = () => {
                 </div>
 
 
-                <button className="view-detection-button">
+               <button
+  className="view-detection-button"
+  onClick={() => navigate("/verification")}
+>
+  <Eye size={14} />
 
-                  <Eye size={14} />
+  Review Detection
 
-                  Review Detection
-
-                  <ChevronRight size={14} />
-
-                </button>
-
+  <ChevronRight size={14} />
+</button>
               </div>
 
             ))}
