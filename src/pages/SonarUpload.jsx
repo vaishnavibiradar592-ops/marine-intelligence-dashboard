@@ -12,17 +12,35 @@ import {
   Ship,
   ScanSearch,
   ArrowRight,
+  CheckCircle2,
+  AlertCircle,
+  LoaderCircle,
 } from "lucide-react";
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+
+const ALLOWED_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/tiff",
+];
 
 const SonarUpload = () => {
 
   const fileInputRef = useRef(null);
 
   const [selectedFile, setSelectedFile] = useState(null);
-
   const [preview, setPreview] = useState(null);
 
   const [dragActive, setDragActive] = useState(false);
+
+  const [fileError, setFileError] = useState("");
+
+  const [processingStatus, setProcessingStatus] =
+    useState("idle");
+
+  const [formError, setFormError] = useState("");
 
   const [formData, setFormData] = useState({
     surveyId: "",
@@ -35,48 +53,67 @@ const SonarUpload = () => {
   });
 
 
-  /* =========================
+  /* =========================================
+     FILE VALIDATION
+  ========================================= */
+
+  const validateFile = (file) => {
+
+    if (!file) {
+      return "Please select a file.";
+    }
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return "Unsupported file format. Please upload PNG, JPG, JPEG or TIFF.";
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return "File size must be less than 20 MB.";
+    }
+
+    return "";
+  };
+
+
+  /* =========================================
      FILE HANDLING
-  ========================= */
+  ========================================= */
 
   const handleFile = (file) => {
 
-    if (!file) return;
+    setFileError("");
 
-    const allowedTypes = [
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
-      "image/tiff",
-    ];
+    const error = validateFile(file);
 
-    if (!allowedTypes.includes(file.type)) {
-      alert(
-        "Please upload a PNG, JPG, JPEG or TIFF sonar image."
-      );
-
+    if (error) {
+      setFileError(error);
       return;
     }
 
-    setSelectedFile(file);
+    if (preview) {
+      URL.revokeObjectURL(preview);
+    }
 
     const imageUrl = URL.createObjectURL(file);
 
+    setSelectedFile(file);
     setPreview(imageUrl);
+
+    setProcessingStatus("idle");
   };
 
 
   const handleFileInput = (event) => {
 
-    const file = event.target.files[0];
+    const file = event.target.files?.[0];
 
     handleFile(file);
   };
 
 
-  /* =========================
+  /* =========================================
      DRAG & DROP
-  ========================= */
+  ========================================= */
 
   const handleDragOver = (event) => {
 
@@ -98,21 +135,25 @@ const SonarUpload = () => {
 
     setDragActive(false);
 
-    const file = event.dataTransfer.files[0];
+    const file = event.dataTransfer.files?.[0];
 
     handleFile(file);
   };
 
 
-  /* =========================
+  /* =========================================
      REMOVE FILE
-  ========================= */
+  ========================================= */
 
   const removeFile = () => {
 
-    setSelectedFile(null);
+    if (preview) {
+      URL.revokeObjectURL(preview);
+    }
 
+    setSelectedFile(null);
     setPreview(null);
+    setFileError("");
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -120,9 +161,9 @@ const SonarUpload = () => {
   };
 
 
-  /* =========================
-     FORM
-  ========================= */
+  /* =========================================
+     FORM HANDLING
+  ========================================= */
 
   const handleChange = (event) => {
 
@@ -132,42 +173,113 @@ const SonarUpload = () => {
       ...previous,
       [name]: value,
     }));
+
+    setFormError("");
   };
 
 
-  const handleSubmit = (event) => {
+  /* =========================================
+     FORM VALIDATION
+  ========================================= */
 
-    event.preventDefault();
+  const validateForm = () => {
 
     if (!selectedFile) {
-      alert("Please upload a sonar image first.");
-      return;
+      return "Please upload a Side-Scan Sonar image.";
+    }
+
+    if (!formData.surveyId.trim()) {
+      return "Survey ID is required.";
+    }
+
+    if (!formData.latitude) {
+      return "Latitude is required.";
+    }
+
+    if (!formData.longitude) {
+      return "Longitude is required.";
+    }
+
+    const latitude = Number(formData.latitude);
+
+    const longitude = Number(formData.longitude);
+
+    if (latitude < -90 || latitude > 90) {
+      return "Latitude must be between -90 and 90.";
+    }
+
+    if (longitude < -180 || longitude > 180) {
+      return "Longitude must be between -180 and 180.";
     }
 
     if (
-      !formData.surveyId ||
-      !formData.latitude ||
-      !formData.longitude
+      formData.depth &&
+      Number(formData.depth) < 0
     ) {
-      alert(
-        "Please complete the required survey information."
-      );
+      return "Depth cannot be negative.";
+    }
 
+    if (
+      formData.sonarRange &&
+      Number(formData.sonarRange) <= 0
+    ) {
+      return "Sonar range must be greater than 0.";
+    }
+
+    return "";
+  };
+
+
+  /* =========================================
+     START AI ANALYSIS
+  ========================================= */
+
+  const handleSubmit = async (event) => {
+
+    event.preventDefault();
+
+    const error = validateForm();
+
+    if (error) {
+      setFormError(error);
       return;
     }
 
-    alert(
-      "Sonar survey submitted for AI analysis."
+    setFormError("");
+
+    /*
+      TEMPORARY DEMO PROCESSING
+
+      Later this will be replaced with:
+      axios.post("/api/sonar/analyze", formData)
+    */
+
+    setProcessingStatus("uploading");
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, 1200)
     );
+
+    setProcessingStatus("processing");
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, 2500)
+    );
+
+    setProcessingStatus("complete");
   };
 
+
+  /* =========================================
+     RENDER
+  ========================================= */
 
   return (
 
     <div className="sonar-page">
 
       {/* =================================
-          PAGE HEADER
+          HEADER
       ================================= */}
 
       <div className="sonar-page-header">
@@ -190,11 +302,23 @@ const SonarUpload = () => {
         </div>
 
 
-        <div className="survey-status">
+        <div
+          className={`survey-status ${
+            processingStatus === "complete"
+              ? "status-complete"
+              : ""
+          }`}
+        >
 
-          <span className="online-dot" />
+          {processingStatus === "complete" ? (
+            <CheckCircle2 size={14} />
+          ) : (
+            <span className="online-dot" />
+          )}
 
-          Ready for Analysis
+          {processingStatus === "complete"
+            ? "Analysis Ready"
+            : "Ready for Analysis"}
 
         </div>
 
@@ -202,7 +326,7 @@ const SonarUpload = () => {
 
 
       {/* =================================
-          MAIN GRID
+          CONTENT
       ================================= */}
 
       <div className="sonar-content-grid">
@@ -236,13 +360,13 @@ const SonarUpload = () => {
           </div>
 
 
-          {/* UPLOAD AREA */}
-
           {!selectedFile ? (
 
             <div
               className={`sonar-dropzone ${
                 dragActive ? "drag-active" : ""
+              } ${
+                fileError ? "dropzone-error" : ""
               }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -267,7 +391,7 @@ const SonarUpload = () => {
               </p>
 
               <span className="file-types">
-                PNG · JPG · JPEG · TIFF
+                PNG · JPG · JPEG · TIFF · MAX 20 MB
               </span>
 
               <input
@@ -282,18 +406,22 @@ const SonarUpload = () => {
 
           ) : (
 
-            /* =================================
-               IMAGE PREVIEW
-            ================================= */
-
             <div className="sonar-preview-container">
 
               <div className="preview-image-wrapper">
 
                 <img
                   src={preview}
-                  alt="Uploaded sonar preview"
+                  alt="Uploaded Side-Scan Sonar preview"
                 />
+
+                <div className="preview-overlay">
+
+                  <span>
+                    SONAR PREVIEW
+                  </span>
+
+                </div>
 
                 <button
                   className="remove-file-button"
@@ -321,9 +449,21 @@ const SonarUpload = () => {
                   </strong>
 
                   <span>
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)}
+                    {(
+                      selectedFile.size /
+                      1024 /
+                      1024
+                    ).toFixed(2)}
                     {" MB"}
                   </span>
+
+                </div>
+
+                <div className="file-valid">
+
+                  <CheckCircle2 size={17} />
+
+                  Valid
 
                 </div>
 
@@ -334,7 +474,24 @@ const SonarUpload = () => {
           )}
 
 
-          {/* PROCESSING INFO */}
+          {/* FILE ERROR */}
+
+          {fileError && (
+
+            <div className="upload-error">
+
+              <AlertCircle size={17} />
+
+              <span>
+                {fileError}
+              </span>
+
+            </div>
+
+          )}
+
+
+          {/* PIPELINE */}
 
           <div className="processing-info">
 
@@ -416,7 +573,7 @@ const SonarUpload = () => {
             </div>
 
 
-            {/* LATITUDE / LONGITUDE */}
+            {/* LOCATION */}
 
             <div className="two-column-fields">
 
@@ -488,6 +645,7 @@ const SonarUpload = () => {
 
                   <input
                     type="number"
+                    min="0"
                     name="depth"
                     placeholder="Depth in meters"
                     value={formData.depth}
@@ -515,6 +673,7 @@ const SonarUpload = () => {
 
                   <input
                     type="number"
+                    min="0"
                     name="sonarRange"
                     placeholder="Range"
                     value={formData.sonarRange}
@@ -581,25 +740,91 @@ const SonarUpload = () => {
             </div>
 
 
-            {/* SUBMIT */}
+            {/* FORM ERROR */}
 
-            <button
-              type="submit"
-              className="analysis-button"
-            >
+            {formError && (
 
-              <ScanSearch size={19} />
+              <div className="form-validation-error">
 
-              Start AI Analysis
+                <AlertCircle size={17} />
 
-              <ArrowRight size={18} />
+                <span>
+                  {formError}
+                </span>
 
-            </button>
+              </div>
+
+            )}
+
+
+            {/* =================================
+                ANALYSIS BUTTON / STATUS
+            ================================= */}
+
+            {processingStatus === "idle" ||
+            processingStatus === "complete" ? (
+
+              <button
+                type="submit"
+                className="analysis-button"
+              >
+
+                {processingStatus === "complete" ? (
+                  <>
+                    <CheckCircle2 size={19} />
+                    Analysis Complete
+                  </>
+                ) : (
+                  <>
+                    <ScanSearch size={19} />
+                    Start AI Analysis
+                    <ArrowRight size={18} />
+                  </>
+                )}
+
+              </button>
+
+            ) : (
+
+              <div className="analysis-progress">
+
+                <div className="progress-icon">
+
+                  <LoaderCircle
+                    size={21}
+                    className="spinning"
+                  />
+
+                </div>
+
+                <div>
+
+                  <strong>
+
+                    {processingStatus === "uploading"
+                      ? "Uploading sonar data..."
+                      : "AI is analyzing sonar imagery..."}
+
+                  </strong>
+
+                  <span>
+
+                    {processingStatus === "uploading"
+                      ? "Preparing survey data"
+                      : "Running detection and anomaly models"}
+
+                  </span>
+
+                </div>
+
+              </div>
+
+            )}
 
 
             <p className="analysis-note">
-              Your sonar image will be processed by the
-              AI detection pipeline after submission.
+              AI processing will detect marine debris,
+              classify objects and identify potential anomalies.
             </p>
 
           </form>
