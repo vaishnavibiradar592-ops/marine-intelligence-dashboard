@@ -1,3 +1,4 @@
+
 import {
   LayoutDashboard,
   Upload,
@@ -10,7 +11,7 @@ import {
   Waves,
   Settings,
 } from "lucide-react";
-
+import { NavLink } from "react-router-dom";
 const Sidebar = () => {
   return (
     <aside className="sidebar">
@@ -36,30 +37,55 @@ const Sidebar = () => {
 
         <nav>
 
-          <div className="nav-item active">
-            <LayoutDashboard size={19} />
-            <span>Dashboard</span>
-          </div>
+          <NavLink
+  to="/dashboard"
+  className={({ isActive }) =>
+    `nav-item ${isActive ? "active" : ""}`
+  }
+>
+  <LayoutDashboard size={19} />
+  <span>Dashboard</span>
+</NavLink>
 
-          <div className="nav-item">
-            <Upload size={19} />
-            <span>Sonar Upload</span>
-          </div>
+          <NavLink
+  to="/sonar-upload"
+  className={({ isActive }) =>
+    `nav-item ${isActive ? "active" : ""}`
+  }
+>
+  <Upload size={19} />
+  <span>Sonar Upload</span>
+</NavLink>
 
-          <div className="nav-item">
-            <ScanSearch size={19} />
-            <span>AI Detections</span>
-          </div>
+          <NavLink
+  to="/detections"
+  className={({ isActive }) =>
+    `nav-item ${isActive ? "active" : ""}`
+  }
+>
+  <ScanSearch size={19} />
+  <span>AI Detections</span>
+</NavLink>
 
-          <div className="nav-item">
-            <TriangleAlert size={19} />
-            <span>Anomalies</span>
-          </div>
+          <NavLink
+  to="/anomalies"
+  className={({ isActive }) =>
+    `nav-item ${isActive ? "active" : ""}`
+  }
+>
+  <TriangleAlert size={19} />
+  <span>Anomalies</span>
+</NavLink>
 
-          <div className="nav-item">
-            <Map size={19} />
-            <span>GIS Map</span>
-          </div>
+          <NavLink
+  to="/gis-map"
+  className={({ isActive }) =>
+    `nav-item ${isActive ? "active" : ""}`
+  }
+>
+  <Map size={19} />
+  <span>GIS Map</span>
+</NavLink>
 
         </nav>
       </div>
@@ -73,26 +99,39 @@ const Sidebar = () => {
 
         <nav>
 
-          <div className="nav-item">
-            <ShieldCheck size={19} />
-            <span>Verification</span>
-          </div>
+          <NavLink
+  to="/verification"
+  className={({ isActive }) =>
+    `nav-item ${isActive ? "active" : ""}`
+  }
+>
+  <ShieldCheck size={19} />
+  <span>Verification</span>
+</NavLink>
 
-          <div className="nav-item">
-            <Bell size={19} />
-            <span>Alerts</span>
+      <NavLink
+  to="/alerts"
+  className={({ isActive }) =>
+    `nav-item ${isActive ? "active" : ""}`
+  }
+>
+  <Bell size={19} />
+  <span>Alerts</span>
 
-            <span className="notification-count">
-              3
-            </span>
+  <span className="notification-count">
+    3
+  </span>
+</NavLink>
 
-          </div>
-
-          <div className="nav-item">
-            <FileText size={19} />
-            <span>Reports</span>
-          </div>
-
+          <NavLink
+  to="/reports"
+  className={({ isActive }) =>
+    `nav-item ${isActive ? "active" : ""}`
+  }
+>
+  <FileText size={19} />
+  <span>Reports</span>
+</NavLink>
         </nav>
 
       </div>

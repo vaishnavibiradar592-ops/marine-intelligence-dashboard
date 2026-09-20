@@ -36,11 +36,16 @@ const Login = () => {
 
     setTimeout(() => {
       if (
-        email === "admin@marineai.com" &&
-        password === "admin123"
-      ) {
-        navigate("/dashboard");
-      } else {
+  email === "admin@marineai.com" &&
+  password === "admin123"
+) {
+  localStorage.setItem(
+    "marineAI_authenticated",
+    "true"
+  );
+
+  navigate("/dashboard");
+}else {
         setError("Invalid email or password.");
         setLoading(false);
       }
